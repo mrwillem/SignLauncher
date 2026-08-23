@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Signage Monitor</title>
+    <style>
+        /* Macht das Bild vollflächig sichtbar ohne Ränder oder Scrollbalken */
+        html, body { 
+            margin: 0; 
+            padding: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #000000; /* Schwarzer Hintergrund, falls ein Bild lädt */
+            overflow: hidden; 
+        }
+        #signageBild { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; /* Bild füllt den TV ohne Verzerrung aus */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Start-Bild (Standard-Fallback, falls gerade kein Event geplant ist) -->
+    <img id="signageBild" src="standard_logo.jpg" alt="Signage">
+
+    <script>
+        // ==========================================================
+        // !!! DIESEN WERT FÜR DIE JEWEILIGE DATEI ANPASSEN !!!
+        // Erlaubt: 'eisbar', 'theke', 'food', 'eingang' oder 'stehle'
+        // ==========================================================
+        const DIESER_BILDSCHIRM = 'eisbar'; 
+
+        function aktualisiereDisplay() {
+            // Holt die zentrale JSON-Datenbank vom Server (inkl. Cache-Schutz)
+            fetch('events.json?v=' + new Date().getTime())
+                .then(response => response.json())
+                .then(eventListe => {
+                    const jetzt = new Date();
+                    
+                    // Standard-Fallback-Bild, wenn aktuell kein Event eingetragen ist.
+                    // Sucht nach z.B. standard_eisbar.jpg oder standard_theke.jpg
+                    let zielBild = 'standard_' + DIESER_BILDSCHIRM + '.jpg'; 
+
+                    // Schleife durch alle geplanten Events in der JSON
+                    for (let event of eventListe) {
+                        
+                        // 1. Prüfen, ob das Event für DIESEN Bildschirm bestimmt ist
+                        if (event.display === DIESER_BILDSCHIRM) {
+                            
+                            // Datumsformate für alle Browser (auch ältere Fire TV Sticks) lesbar machen
+                            const startZeit = new Date(event.start.replace(/-/g, "/"));
+                            const endeZeit = new Date(event.ende.replace(/-/g, "/"));
+
+                            // 2. Prüfen, ob das Event zeitlich JETZT aktiv ist
+                            if (jetzt >= startZeit && jetzt <= endeZeit) {
+                                zielBild = event.bild;
+                                break; // Passendes Event gefunden, Schleife beenden
+                            }
+                        }
+                    }
+
+                    // Bild-Wechsel auf dem Fernseher durchführen
+                    const bildElement = document.getElementById('signageBild');
+                    const neuerPfad = zielBild + '?v=' + jetzt.getTime(); // Cache-Busting für das Bild
+
+                    // Nur umschalten, wenn sich der Bildname geändert hat (verhindert Flackern)
+                    if (!bildElement.src.includes(zielBild)) {
+                        bildElement.src = neuerPfad;
+                        console.log(DIESER_BILDSCHIRM + " Display wechselt zu: " + zielBild);
+                    }
+                })
+                .catch(err => {
+                    // Falls die JSON noch nicht existiert, wird das Standardbild für dieses Display geladen
+                    const bildElement = document.getElementById('signageBild');
+                    const standardBild = 'standard_' + DIESER_BILDSCHIRM + '.jpg';
+                    if (!bildElement.src.includes(standardBild)) {
+                        bildElement.src = standardBild;
+                    }
+                });
+        }
+
+        // 1. Sofort beim Start des Displays prüfen
+        aktualisiereDisplay();
+
+        // 2. Alle 60 Sekunden (60000 ms) im Hintergrund neu prüfen
+        setInterval(aktualisiereDisplay, 60000);
+    </script>
+</body>
+</html>
+

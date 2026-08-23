@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Signage - Zentraler Event Planer</title>
+    <style>
+        body { font-family: sans-serif; max-width: 650px; margin: 30px auto; padding: 25px; border: 1px solid #ddd; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); background: #fff; }
+        h2, h3 { text-align: center; color: #333; margin-top: 0; }
+        .feld { margin-bottom: 18px; }
+        label { display: block; font-weight: bold; margin-bottom: 6px; color: #555; }
+        input, select { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        .zeit-gruppe { display: flex; gap: 10px; }
+        .zeit-gruppe div { flex: 1; }
+        button { background: #007bff; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-size: 16px; font-weight: bold; border-radius: 6px; width: 100%; }
+        button:hover { background: #0056b3; }
+        
+        .preview-container { display: none; margin-top: 15px; text-align: center; border: 1px dashed #ccc; padding: 10px; border-radius: 6px; background: #f9f9f9; }
+        #bildVorschau { max-width: 100%; max-height: 200px; border-radius: 4px; }
+
+        hr { margin: 40px 0 20px 0; border: 0; border-top: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f5f5f5; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .badge-eisbar { background: #e0f7fa; color: #006064; }
+        .badge-theke { background: #f3e5f5; color: #4a148c; }
+        .badge-food { background: #efebe9; color: #3e2723; }
+        .badge-eingang { background: #e8f5e9; color: #1b5e20; }
+        .badge-stehle { background: #fff3e0; color: #e65100; }
+    </style>
+</head>
+<body>
+
+    <h2>Zentrale Display-Steuerung</h2>
+    
+    <form action="upload.php" method="POST" enctype="multipart/form-data">
+        
+        <div class="feld">
+            <label for="pw">Sicherheits-Passwort:</label>
+            <input type="password" id="pw" name="pw" placeholder="Passwort eingeben" required>
+        </div>
+
+        <div class="feld">
+            <label for="display_typ">Welcher Bildschirm soll bespielt werden?</label>
+            <select id="display_typ" name="display_typ" required>
+                <option value="eisbar">Eisbar-Display</option>
+                <option value="theke">Theke-Display</option>
+                <option value="food">Essensausgabe-Display</option>
+                <option value="eingang">Eingang-Display</option>
+                <option value="stehle">Stehle-Display</option>
+            </select>
+        </div>
+
+        <div class="zeit-gruppe feld">
+            <div>
+                <label>Von:</label>
+                <input type="date" id="start_datum" required>
+                <input type="time" id="start_uhrzeit" required style="margin-top: 5px;">
+            </div>
+            <div>
+                <label>Bis:</label>
+                <input type="date" id="ende_datum" required>
+                <input type="time" id="ende_uhrzeit" required style="margin-top: 5px;">
+            </div>
+        </div>
+
+        <input type="hidden" id="start_zeit" name="start_zeit">
+        <input type="hidden" id="ende_zeit" name="ende_zeit">
+
+        <div class="feld">
+            <label for="menue_bild">Bild / Grafik auswählen (JPG):</label>
+            <input type="file" id="menue_bild" name="menue_bild" accept=".jpg, .jpeg" required>
+            
+            <div class="preview-container" id="previewContainer">
+                <img id="bildVorschau" src="#" alt="Vorschau">
+            </div>
+        </div>
+
+        <button type="submit">Sende an ausgewählten Bildschirm</button>
+    </form>
+
+    <hr>
+
+    <h3>Geplante Displays & Programme</h3>
+    <table id="eventTabelle">
+        <thead>
+            <tr>
+                <th>Hochgeladene Datei</th>
+                <th>Display</th>
+                <th>Von</th>
+                <th>Bis</th>
+                <th>Aktion</th>
+            </tr>
+        </thead>
+        <tbody id="eventTabelleBody">
+            <tr>
+                <td colspan="5" style="text-align:center; color:#888;">Lade geplante Events...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('menue_bild').addEventListener('change', function(event) {
+            const datei = event.target.files;
+            if (datei) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('bildVorschau').src = e.target.result;
+                    document.getElementById('previewContainer').style.display = 'block';
+                }
+                reader.readAsDataURL(datei);
+            }
+        });
+
+	function setzeStandardZeiten() {
+    const heute = new Date();
+    
+    // 1. Startzeit zusammenbauen: Heute, 12:00 Uhr
+    const startJahr = heute.getFullYear();
+    const startMonat = String(heute.getMonth() + 1).padStart(2, '0');
+    const startTag = String(heute.getDate()).padStart(2, '0');
+    
+    document.getElementById('start_datum').value = `${startJahr}-${startMonat}-${startTag}`;
+    document.getElementById('start_uhrzeit').value = "12:00";
+    
+    // 2. Endzeit berechnen: Morgen, 08:00 Uhr
+    const morgen = new Date(heute);
+    morgen.setDate(heute.getDate() + 1); // Erhöht das Datum automatisch um genau 1 Tag
+    
+    const endeJahr = morgen.getFullYear();
+    const endeMonat = String(morgen.getMonth() + 1).padStart(2, '0');
+    const endeTag = String(morgen.getDate()).padStart(2, '0');
+    
+    document.getElementById('ende_datum').value = `${endeJahr}-${endeMonat}-${endeTag}`;
+    document.getElementById('ende_uhrzeit').value = "08:00";
+    
+    // Beim Klick auf den Absende-Button die Daten für PHP verschmelzen
+    document.querySelector('form').addEventListener('submit', function() {
+        document.getElementById('start_zeit').value = document.getElementById('start_datum').value + 'T' + document.getElementById('start_uhrzeit').value;
+        document.getElementById('ende_zeit').value = document.getElementById('ende_datum').value + 'T' + document.getElementById('ende_uhrzeit').value;
+    });
+}
+        function eventLoeschen(bildName) {
+            const pw = prompt("Bitte Sicherheits-Passwort eingeben, um dieses Event zu löschen:");
+            if (!pw) return;
+
+            const form = document.createElement('form');
+            form.method = 'POST'; form.action = 'upload.php';
+
+            const pwInput = document.createElement('input');
+            pwInput.type = 'hidden'; pwInput.name = 'pw'; pwInput.value = pw;
+            form.appendChild(pwInput);
+
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden'; actionInput.name = 'action'; actionInput.value = 'delete';
+            form.appendChild(actionInput);
+
+            const bildInput = document.createElement('input');
+            bildInput.type = 'hidden'; bildInput.name = 'loesch_bild'; bildInput.value = bildName;
+            form.appendChild(bildInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+	function ladeEventUebersicht() {
+            fetch('events.json?v=' + new Date().getTime())
+                .then(response => response.json())
+                .then(events => {
+                    const tbody = document.getElementById('eventTabelleBody');
+                    tbody.innerHTML = '';
+
+                    if (events.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Aktuell keine Events geplant.</td></tr>';
+                        return;
+                    }
+
+                    events.sort((a, b) => new Date(a.start) - new Date(b.start));
+		                        events.forEach(event => {
+                        const tr = document.createElement('tr');
+                        
+                        const optionen = { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' };
+                        const von = new Date(event.start.replace(/-/g, "/")).toLocaleString('de-DE', optionen);
+                        const bis = new Date(event.ende.replace(/-/g, "/")).toLocaleString('de-DE', optionen);
+                        
+                        // Holt den echten Originalnamen. Falls alt, wird der Server-Dateiname gezeigt
+                        const dateiAnzeige = event.original_name ? event.original_name : 'Alte Datei';
+
+                        // JETZT EXAKT 5 SPALTEN (td) PASSEND ZU DEN 5 ÜBERSCHRIFTEN (th):
+                        tr.innerHTML = `
+                            <td><code>${dateiAnzeige}</code></td>
+                            <td><span class="badge badge-${event.display}">${event.display}</span></td>
+                            <td>${von}</td>
+                            <td>${bis}</td>
+                            <td style="text-align: center;">
+                                <a href="${event.bild}" target="_blank" style="color:#007bff; text-decoration:none; font-size:14px; margin-right:4px;" title="Ansehen">👁️</a>
+                                <button onclick="eventLoeschen('${event.bild}')" style="background:#dc3545; color:white; border:none; padding:3px 5px; border-radius:4px; cursor:pointer; font-size:11px;" title="Löschen">🗑️</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                })
+                .catch(err => {
+                    document.getElementById('eventTabelleBody').innerHTML = '<tr><td colspan="5" style="text-align:center; color:#888;">Noch keine Datenbank angelegt.</td></tr>';
+                });
+        }
+        setzeStandardZeiten();
+        ladeEventUebersicht();
+    </script>
+</body>
+</html>
+
