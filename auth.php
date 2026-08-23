@@ -6,7 +6,6 @@ declare(strict_types=1);
  * outside the web root in production. The local data/ directory is protected
  * by .htaccess for Apache installations.
  */
-const SCREEN_IDS = ['eisbar', 'theke', 'food', 'eingang', 'stehle'];
 const SESSION_NAME = 'signlauncher_session';
 
 date_default_timezone_set(getenv('SIGNLAUNCHER_TIMEZONE') ?: 'Europe/Berlin');
@@ -109,7 +108,27 @@ function logout_user(): void {
 }
 
 function valid_password(string $password): bool { return strlen($password) >= 12; }
-function valid_screen(string $screen): bool { return in_array($screen, SCREEN_IDS, true); }
+function display_id_valid(string $id): bool { return (bool) preg_match('/^[A-Za-z0-9_-]+$/', $id); }
+function default_displays(): array { return [['id' => 'eisbar', 'name' => 'Eisbar', 'orientation' => 0], ['id' => 'theke', 'name' => 'Theke', 'orientation' => 0], ['id' => 'food', 'name' => 'Food', 'orientation' => 0], ['id' => 'eingang', 'name' => 'Eingang', 'orientation' => 0], ['id' => 'stehle', 'name' => 'Stehle', 'orientation' => 0]]; }
+function legacy_yaml_displays(string $path): array {
+    $result = []; $current = null;
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        if (preg_match('/^\s*-\s+id:\s*(.+)$/', $line, $m)) { if ($current !== null) $result[] = $current; $current = ['id' => trim($m[1], " \t\"'")]; }
+        elseif ($current !== null && preg_match('/^\s+name:\s*(.+)$/', $line, $m)) { $value = trim($m[1]); $decoded = json_decode($value, true); $current['name'] = is_string($decoded) ? $decoded : trim($value, " \t\"'"); }
+        elseif ($current !== null && preg_match('/^\s+orientation:\s*(\d+)\s*$/', $line, $m)) $current['orientation'] = (int) $m[1];
+    }
+    if ($current !== null) $result[] = $current;
+    return $result;
+}
+function displays(): array {
+    ensure_data_dir(); $path = app_path('displays.json');
+    if (!is_file($path)) { $legacy = app_path('displays.yaml'); $migrated = is_file($legacy) ? legacy_yaml_displays($legacy) : default_displays(); save_displays($migrated); if (is_file($legacy)) unlink($legacy); }
+    $result = read_json_file($path);
+    return array_values(array_filter($result, static fn($d) => isset($d['id'], $d['name'], $d['orientation']) && display_id_valid($d['id']) && in_array($d['orientation'], [0, 90, 180, 270], true)));
+}
+function save_displays(array $displays): void { write_json_file(app_path('displays.json'), $displays); }
+function display_by_id(string $id): ?array { foreach (displays() as $display) if ($display['id'] === $id) return $display; return null; }
+function valid_screen(string $screen): bool { return display_by_id($screen) !== null; }
 function new_recovery_code(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
 function recovery_code_hash(string $code): string { return hash('sha256', $code); }
 
@@ -129,5 +148,5 @@ function clear_failed_logins(array &$data): void { unset($data['login_attempts']
 function events(): array { return read_json_file(app_path('events.json')); }
 function save_events(array $events): void { write_json_file(app_path('events.json'), $events); }
 function media_path(string $file): string { return app_path('media/' . basename($file)); }
-function safe_event_file(string $file): bool { return (bool) preg_match('/^display_[a-z]+_[a-zA-Z0-9_-]+\.jpg$/', $file); }
+function safe_event_file(string $file): bool { return (bool) preg_match('/^display_[A-Za-z0-9_-]+_[a-zA-Z0-9_-]+\.(jpg|mp4)$/', $file); }
 function h(string $value): string { return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }

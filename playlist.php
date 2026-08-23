@@ -10,6 +10,7 @@ foreach (events() as $event) {
         if ($selected === null || ($event['priority'] ?? 0) > ($selected['priority'] ?? 0) || ($event['start'] ?? '') > ($selected['start'] ?? '')) $selected = $event;
     }
 }
-$image = $selected !== null ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode((string) $selected['bild']) : 'standard_' . $screen . '.jpg';
+$file = $selected !== null ? (string) $selected['bild'] : 'standard_' . $screen . '.jpg';
+$image = $selected !== null ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode($file) : $file;
 header('Content-Type: application/json; charset=utf-8'); header('Cache-Control: no-store');
-echo json_encode(['image' => $image, 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);
+echo json_encode(['image' => $image, 'type' => strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video' : 'image', 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);

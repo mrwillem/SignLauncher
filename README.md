@@ -6,7 +6,7 @@ SignLauncher is a small, self-hosted digital signage system for one location and
 
 - One administrator account with login, logout, password change, and recovery-code password reset.
 - Session-protected content administration and CSRF protection for state-changing forms.
-- JPEG upload and time-based scheduling for the built-in display IDs: `eisbar`, `theke`, `food`, `eingang`, and `stehle`.
+- JPEG and MP4 upload with time-based scheduling for administrator-managed displays.
 - Server-side playlist selection and private media delivery for authenticated displays.
 
 ## How it works
@@ -24,7 +24,7 @@ When schedules overlap, the server selects the item with the highest optional `p
 
 ## Configuration
 
-`SIGNLAUNCHER_DATA_DIR` optionally sets the directory for JSON data and uploaded images. In production, point it to a writable directory outside the web root. Without it, SignLauncher uses the local `data/` directory.
+`SIGNLAUNCHER_DATA_DIR` optionally sets the directory for JSON data and uploaded media. In production, point it to a writable directory outside the web root. Without it, SignLauncher uses the local `data/` directory.
 
 `SIGNLAUNCHER_TIMEZONE` optionally sets the venue timezone. It defaults to `Europe/Berlin`.
 
@@ -32,13 +32,13 @@ The fallback images are named `standard_eisbar.jpg`, `standard_theke.jpg`, and s
 
 ## Displays
 
-After signing in, open **Displays** (`screens.php`) and copy the matching URL to each device's browser in full-screen mode. For example, the Eisbar display uses `display.php?screen=eisbar`.
+After signing in, open **Displays** (`screens.php`) to create, edit, or delete display definitions. Each display has a unique ID, name, and orientation. Copy the matching URL to each device's browser in full-screen mode; for example, the Eisbar display uses `display.php?screen=eisbar`.
 
 The legacy `display.html` page does not select a screen; use `display.php?screen=<screen>` instead.
 
 ## Content and schedules
 
-In `formular.php`, choose a display, select a start and end date/time, and upload a JPEG. Files are limited to 5 MB and 8000 × 8000 pixels. The schedule is evaluated on the server. The event list lets the signed-in administrator delete an event; events that ended more than 24 hours ago and their media are cleaned up when a new upload is saved.
+In `formular.php`, choose a display, select a start and end date/time, and upload a JPEG or MP4 file. Files are limited to 25 MB; JPEG images are also limited to 8000 × 8000 pixels. The schedule is evaluated on the server. The event list lets the signed-in administrator delete an event; events that ended more than 24 hours ago and their media are cleaned up when a new upload is saved.
 
 ## Security notes
 

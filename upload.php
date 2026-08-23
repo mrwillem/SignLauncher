@@ -14,12 +14,14 @@ if (!isset($_FILES['menue_bild']) || !is_array($_FILES['menue_bild'])) { http_re
 $upload = $_FILES['menue_bild']; $display = (string) ($_POST['display_typ'] ?? ''); $startInput = (string) ($_POST['start_zeit'] ?? ''); $endInput = (string) ($_POST['ende_zeit'] ?? '');
 if (!valid_screen($display)) { http_response_code(400); exit('Unbekanntes Display.'); }
 if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) $upload['tmp_name'])) { http_response_code(400); exit('Upload fehlgeschlagen.'); }
-if (($upload['size'] ?? 0) > 5 * 1024 * 1024) { http_response_code(400); exit('Das Bild ist größer als 5 MB.'); }
+if (($upload['size'] ?? 0) > 25 * 1024 * 1024) { http_response_code(400); exit('Die Datei ist größer als 25 MB.'); }
 $start = DateTimeImmutable::createFromFormat('Y-m-d\\TH:i', $startInput); $end = DateTimeImmutable::createFromFormat('Y-m-d\\TH:i', $endInput);
 if (!$start || !$end || $start >= $end) { http_response_code(400); exit('Der Zeitraum ist ungültig.'); }
-$info = @getimagesize((string) $upload['tmp_name']);
-if ($info === false || ($info[2] ?? 0) !== IMAGETYPE_JPEG || $info[0] > 8000 || $info[1] > 8000) { http_response_code(400); exit('Nur JPEG-Bilder bis 8000 × 8000 Pixel sind erlaubt.'); }
-$originalName = basename((string) $upload['name']); $file = 'display_' . $display . '_' . bin2hex(random_bytes(12)) . '.jpg';
+$extension = strtolower(pathinfo((string) $upload['name'], PATHINFO_EXTENSION)); $info = $extension === 'jpg' || $extension === 'jpeg' ? @getimagesize((string) $upload['tmp_name']) : false;
+if (($extension === 'jpg' || $extension === 'jpeg') && ($info === false || ($info[2] ?? 0) !== IMAGETYPE_JPEG || $info[0] > 8000 || $info[1] > 8000)) { http_response_code(400); exit('JPEG-Bilder dürfen höchstens 8000 × 8000 Pixel groß sein.'); }
+if ($extension === 'mp4' && (new finfo(FILEINFO_MIME_TYPE))->file((string) $upload['tmp_name']) !== 'video/mp4') { http_response_code(400); exit('Ungültige MP4-Datei.'); }
+if (!in_array($extension, ['jpg', 'jpeg', 'mp4'], true)) { http_response_code(400); exit('Nur JPG und MP4 sind erlaubt.'); }
+$originalName = basename((string) $upload['name']); $file = 'display_' . $display . '_' . bin2hex(random_bytes(12)) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
 ensure_data_dir(); if (!is_dir(app_path('media'))) mkdir(app_path('media'), 0700, true);
 if (!move_uploaded_file((string) $upload['tmp_name'], media_path($file))) { http_response_code(500); exit('Bild konnte nicht gespeichert werden.'); }
 @chmod(media_path($file), 0600);

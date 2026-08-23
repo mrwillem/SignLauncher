@@ -6,4 +6,4 @@ $allowed = false;
 foreach (events() as $event) if (($event['display'] ?? '') === $screen && ($event['bild'] ?? '') === $file) { $allowed = true; break; }
 $path = media_path($file);
 if (!$allowed || !is_file($path)) { http_response_code(404); exit; }
-header('Content-Type: image/jpeg'); header('Content-Length: ' . filesize($path)); header('Cache-Control: private, max-age=3600'); readfile($path);
+header('Content-Type: ' . (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video/mp4' : 'image/jpeg')); header('Content-Length: ' . filesize($path)); header('Cache-Control: private, max-age=3600'); readfile($path);

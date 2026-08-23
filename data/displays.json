@@ -1,0 +1,27 @@
+[
+    {
+        "id": "eisbar",
+        "name": "Eisbar",
+        "orientation": 0
+    },
+    {
+        "id": "theke",
+        "name": "Theke",
+        "orientation": 0
+    },
+    {
+        "id": "food",
+        "name": "Food",
+        "orientation": 0
+    },
+    {
+        "id": "eingang",
+        "name": "Eingang",
+        "orientation": 0
+    },
+    {
+        "id": "stehle",
+        "name": "Stehle",
+        "orientation": 0
+    }
+]
