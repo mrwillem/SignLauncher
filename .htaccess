@@ -1,0 +1,4 @@
+Options -Indexes
+<FilesMatch "^(events\.json|hash\.php)$">
+    Require all denied
+</FilesMatch>
