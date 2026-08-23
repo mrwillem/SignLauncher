@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . '/auth.php'; migrate_legacy_data();
-$screen = (string) ($_GET['screen'] ?? ''); $token = (string) ($_GET['token'] ?? '');
-if (!authorize_screen($screen, $token)) { http_response_code(403); exit('Nicht autorisiertes Display.'); }
+$screen = (string) ($_GET['screen'] ?? '');
+if (!valid_screen($screen)) { http_response_code(400); exit('Unbekanntes Display.'); }
 $now = time(); $selected = null;
 foreach (events() as $event) {
     if (($event['display'] ?? '') !== $screen) continue;
@@ -10,6 +10,6 @@ foreach (events() as $event) {
         if ($selected === null || ($event['priority'] ?? 0) > ($selected['priority'] ?? 0) || ($event['start'] ?? '') > ($selected['start'] ?? '')) $selected = $event;
     }
 }
-$image = $selected !== null ? 'media.php?screen=' . rawurlencode($screen) . '&token=' . rawurlencode($token) . '&file=' . rawurlencode((string) $selected['bild']) : 'standard_' . $screen . '.jpg';
+$image = $selected !== null ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode((string) $selected['bild']) : 'standard_' . $screen . '.jpg';
 header('Content-Type: application/json; charset=utf-8'); header('Cache-Control: no-store');
 echo json_encode(['image' => $image, 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);

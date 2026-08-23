@@ -110,13 +110,8 @@ function logout_user(): void {
 
 function valid_password(string $password): bool { return strlen($password) >= 12; }
 function valid_screen(string $screen): bool { return in_array($screen, SCREEN_IDS, true); }
-function new_device_token(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
-function token_hash(string $token): string { return hash('sha256', $token); }
-function authorize_screen(string $screen, string $token): bool {
-    if (!valid_screen($screen) || $token === '') return false;
-    $hash = auth_data()['screens'][$screen]['token_hash'] ?? '';
-    return is_string($hash) && hash_equals($hash, token_hash($token));
-}
+function new_recovery_code(): string { return rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '='); }
+function recovery_code_hash(string $code): string { return hash('sha256', $code); }
 
 function login_attempt_key(): string { return hash('sha256', (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown')); }
 function login_rate_limited(array $data): bool {

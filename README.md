@@ -7,12 +7,11 @@ SignLauncher is a small, self-hosted digital signage system for one location and
 - One administrator account with login, logout, password change, and recovery-code password reset.
 - Session-protected content administration and CSRF protection for state-changing forms.
 - JPEG upload and time-based scheduling for the built-in display IDs: `eisbar`, `theke`, `food`, `eingang`, and `stehle`.
-- A separate, revocable token for each display.
 - Server-side playlist selection and private media delivery for authenticated displays.
 
 ## How it works
 
-The administrator creates scheduled events in `formular.php`. Events are stored in `data/events.json`; uploaded images are stored in `data/media/`. A display opens its own token-protected `display.php` URL. Every 60 seconds it requests a playlist for that display only. The server returns the active image, or the fallback `standard_<display>.jpg` when no event is active.
+The administrator creates scheduled events in `formular.php`. Events are stored in `data/events.json`; uploaded images are stored in `data/media/`. A display opens `display.php` with its screen identifier. Every 60 seconds it requests a playlist for that display only. The server returns the active image, or the fallback `standard_<display>.jpg` when no event is active.
 
 When schedules overlap, the server selects the item with the highest optional `priority`; when priorities are equal, it selects the most recently starting matching item. The current administration form does not create priorities, so normal uploads use the latter rule.
 
@@ -33,9 +32,9 @@ The fallback images are named `standard_eisbar.jpg`, `standard_theke.jpg`, and s
 
 ## Displays
 
-After signing in, open **Displays & Tokens** (`screens.php`). Generate a token for each physical display and copy the generated display URL to that device's browser in full-screen mode. The URL is displayed only when a token is generated. Regenerating a token immediately invalidates the old display URL.
+After signing in, open **Displays** (`screens.php`) and copy the matching URL to each device's browser in full-screen mode. For example, the Eisbar display uses `display.php?screen=eisbar`.
 
-The legacy `display.html` page no longer plays scheduled content because it has no display token.
+The legacy `display.html` page does not select a screen; use `display.php?screen=<screen>` instead.
 
 ## Content and schedules
 
@@ -43,6 +42,6 @@ In `formular.php`, choose a display, select a start and end date/time, and uploa
 
 ## Security notes
 
-Use HTTPS and keep PHP, the web server, and the host patched. Do not share the administrator password, recovery code, or display URLs. Display tokens act as credentials.
+Use HTTPS and keep PHP, the web server, and the host patched. Do not share the administrator password or recovery code. Display URLs are intentionally public to devices that know a valid screen identifier.
 
 Never expose the data directory directly. The included `.htaccess` files protect it on Apache. With Nginx or another server, either use `SIGNLAUNCHER_DATA_DIR` outside the web root or explicitly deny `/data/` requests. The PHP process needs read/write access to the configured data directory.

@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!valid_password($password)) $error = 'Das Passwort muss mindestens 12 Zeichen lang sein.';
     elseif (!hash_equals($password, $confirm)) $error = 'Die Passwörter stimmen nicht überein.';
     else {
-        $recoveryCode = new_device_token();
-        save_auth_data(['password_hash' => password_hash($password, PASSWORD_ARGON2ID), 'recovery_hash' => token_hash($recoveryCode), 'screens' => []]);
+        $recoveryCode = new_recovery_code();
+        save_auth_data(['password_hash' => password_hash($password, PASSWORD_ARGON2ID), 'recovery_hash' => recovery_code_hash($recoveryCode)]);
     }
 }
 ?><!doctype html><html lang="de"><meta charset="utf-8"><title>Signage einrichten</title><body>
