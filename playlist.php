@@ -21,8 +21,28 @@ foreach (events() as $event) {
         }
     }
 }
-$file = $selected !== null ? (string) $selected['bild'] : 'standard_' . $screen . '.jpg';
-$image = $selected !== null ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode($file) : $file;
+if ($selected !== null) {
+    $file = (string) $selected['bild'];
+} else {
+    $file = null;
+
+    foreach (['jpg', 'mp4'] as $extension) {
+        $candidate = 'standard_' . $screen . '.' . $extension;
+
+        if (is_file(media_path($candidate))) {
+            $file = $candidate;
+            break;
+        }
+    }
+
+    if ($file === null) {
+        $file = 'standard_' . $screen . '.jpg';
+    }
+}
+
+$image = $selected !== null || str_starts_with($file, 'standard_')
+    ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode($file)
+    : $file;
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 echo json_encode(['image' => $image, 'type' => strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video' : 'image', 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);

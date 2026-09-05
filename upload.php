@@ -8,6 +8,106 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 require_csrf();
+if (($_POST['action'] ?? '') === 'save_default') {
+    $display = (string) ($_POST['display_typ'] ?? '');
+
+    if (!valid_screen($display)) {
+        http_response_code(400);
+        exit('Unbekanntes Display.');
+    }
+
+    if (
+        !isset($_FILES['default_content']) ||
+        !is_array($_FILES['default_content'])
+    ) {
+        http_response_code(400);
+        exit('Kein Default Content hochgeladen.');
+    }
+
+    $upload = $_FILES['default_content'];
+
+    if (
+        ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK ||
+        !is_uploaded_file((string) $upload['tmp_name'])
+    ) {
+        http_response_code(400);
+        exit('Upload fehlgeschlagen.');
+    }
+
+    if (($upload['size'] ?? 0) > 25 * 1024 * 1024) {
+        http_response_code(400);
+        exit('Die Datei ist größer als 25 MB.');
+    }
+
+    $extension = strtolower(
+        pathinfo((string) $upload['name'], PATHINFO_EXTENSION)
+    );
+
+    if ($extension === 'jpeg') {
+        $extension = 'jpg';
+    }
+
+    if (!in_array($extension, ['jpg', 'mp4'], true)) {
+        http_response_code(400);
+        exit('Nur JPG und MP4 sind erlaubt.');
+    }
+
+    if ($extension === 'jpg') {
+        $info = @getimagesize((string) $upload['tmp_name']);
+
+        if (
+            $info === false ||
+            ($info[2] ?? 0) !== IMAGETYPE_JPEG ||
+            $info[0] > 8000 ||
+            $info[1] > 8000
+        ) {
+            http_response_code(400);
+            exit(
+                'JPEG-Bilder dürfen höchstens 8000 × 8000 Pixel groß sein.'
+            );
+        }
+    }
+
+    if (
+        $extension === 'mp4' &&
+        (new finfo(FILEINFO_MIME_TYPE))->file(
+            (string) $upload['tmp_name']
+        ) !== 'video/mp4'
+    ) {
+        http_response_code(400);
+        exit('Ungültige MP4-Datei.');
+    }
+
+    ensure_data_dir();
+
+    if (!is_dir(app_path('media'))) {
+        mkdir(app_path('media'), 0700, true);
+    }
+
+    $file = 'standard_' . $display . '.' . $extension;
+    $path = media_path($file);
+
+    // Vorhandenen Default Content entfernen.
+    foreach (['jpg', 'mp4'] as $oldExtension) {
+        $oldFile = 'standard_' . $display . '.' . $oldExtension;
+
+        if ($oldFile !== $file && is_file(media_path($oldFile))) {
+            unlink(media_path($oldFile));
+        }
+    }
+
+    if (!move_uploaded_file((string) $upload['tmp_name'], $path)) {
+        http_response_code(500);
+        exit('Default Content konnte nicht gespeichert werden.');
+    }
+
+    @chmod($path, 0600);
+
+    header('Location: screens.php?message=' . rawurlencode(
+        'Default Content gespeichert.'
+    ));
+    exit;
+}
 function redirect_admin(string $message): never
 {
     header('Location: formular.php?message=' . rawurlencode($message));

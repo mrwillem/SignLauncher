@@ -4,6 +4,22 @@ require __DIR__ . '/auth.php';
 
 require_login();
 
+function default_content(string $screen): ?array
+{
+    foreach (['jpg', 'mp4'] as $extension) {
+        $file = 'standard_' . $screen . '.' . $extension;
+
+        if (is_file(media_path($file))) {
+            return [
+                'file' => $file,
+                'type' => $extension === 'mp4' ? 'video' : 'image',
+            ];
+        }
+    }
+
+    return null;
+}
+
 $error = '';
 $edit = null;
 
@@ -192,7 +208,8 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                             <th>ID</th>
                             <th>Name</th>
                             <th>Orientation</th>
-                            <th>Playback URL</th>
+			    <th>Playback URL</th>
+			    <th>Default Content</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -227,7 +244,85 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                                     <code>
                                         <?= h($playbackUrl) ?>
                                     </code>
-                                </td>
+				</td>
+				<?php $default = default_content($display['id']); ?>
+
+				<td>
+    				    <?php if ($default): ?>
+        			    <div>
+            			        <strong><?= h($default['file']) ?></strong>
+        			    </div>
+				    <form
+            				method="post"
+            				action="upload.php"
+            				class="inline-form"
+            				onsubmit="return confirm('Default Content wirklich löschen?');"
+        			    >
+            			    <input
+                			type="hidden"
+					name="csrf"
+                			value="<?= h(csrf_token()) ?>"
+            			    >
+
+            			    <input
+                			type="hidden"
+                			name="action"
+               			 	value="delete_default"
+            			    >
+
+            			    <input
+                			type="hidden"
+                			name="display_typ"
+                			value="<?= h($display['id']) ?>"
+            			    >
+
+            			    <button
+                		    	type="submit"
+                		    	class="btn btn-danger"
+            			    >
+               			 	Default löschen
+            			    </button>
+        			    </form>
+    				<?php else: ?>
+        			    <div>Kein Default Content</div>
+    				<?php endif; ?>
+
+    				    <form
+        			        method="post"
+        			        action="upload.php"
+        			        enctype="multipart/form-data"
+        			        class="stack"
+    				    >
+        				<input
+            				    type="hidden"
+            				    name="csrf"
+            				    value="<?= h(csrf_token()) ?>"
+        				>
+
+        				<input
+            				    type="hidden"
+            				    name="action"
+            				    value="save_default"
+        				>
+
+        				<input
+            				    type="hidden"
+            				    name="display_typ"
+            				    value="<?= h($display['id']) ?>"
+        				>
+
+        				<input
+            				    type="file"
+            				    name="default_content"
+            				    accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4"
+            				    required
+        				>
+
+        				<button type="submit" class="btn btn-secondary">
+            				    <?= $default ? 'Ersetzen' : 'Upload' ?>
+        			        </button>
+    				    </form>
+				</td>
                                 <td>
                                     <div class="actions">
                                         <a

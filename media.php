@@ -9,11 +9,21 @@ if (!valid_screen($screen) || !safe_event_file($file)) {
     exit;
 }
 $allowed = false;
+
+// Event-Medium
 foreach (events() as $event) {
     if (($event['display'] ?? '') === $screen && ($event['bild'] ?? '') === $file) {
         $allowed = true;
         break;
     }
+}
+
+// Default-Medium
+$defaultJpg = 'standard_' . $screen . '.jpg';
+$defaultMp4 = 'standard_' . $screen . '.mp4';
+
+if ($file === $defaultJpg || $file === $defaultMp4) {
+    $allowed = true;
 }
 $path = media_path($file);
 if (!$allowed || !is_file($path)) {

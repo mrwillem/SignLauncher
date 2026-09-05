@@ -271,7 +271,7 @@ function media_path(string $file): string
 }
 function safe_event_file(string $file): bool
 {
-    return (bool) preg_match('/^display_[A-Za-z0-9_-]+_[a-zA-Z0-9_-]+\.(jpg|mp4)$/', $file);
+    return (bool) preg_match('/^(?:display_[A-Za-z0-9_-]+_[a-zA-Z0-9_-]+|standard_[A-Za-z0-9_-]+)\.(jpg|mp4)$/', $file);
 }
 function h(string $value): string
 {
