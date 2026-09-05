@@ -100,12 +100,13 @@ require_login();
                             <th>Display</th>
                             <th>Von</th>
                             <th>Bis</th>
+                            <th>Preview</th>
                             <th>Aktion</th>
                         </tr>
                     </thead>
                     <tbody id="events">
                         <tr>
-                            <td colspan="5">Lade Events…</td>
+                            <td colspan="6">Lade Events…</td>
                         </tr>
                     </tbody>
                 </table>
@@ -155,11 +156,17 @@ require_login();
             return td;
         }
 
+        function filenameCell(event) {
+            return cell(event.original_name || 'Datei');
+        }
+
         function previewCell(event) {
             const td = document.createElement('td');
-            const trigger = document.createElement('span');
+            const trigger = document.createElement('button');
 
-            trigger.textContent = event.original_name || 'Datei';
+            trigger.type = 'button';
+            trigger.className = 'btn btn-secondary preview-trigger';
+            trigger.textContent = 'Preview';
             trigger.setAttribute('data-preview-display', event.display);
             trigger.setAttribute('data-preview-file', event.bild);
             trigger.setAttribute(
@@ -172,6 +179,14 @@ require_login();
             };
 
             trigger.onmouseout = function() {
+                hidePreview();
+            };
+
+            trigger.onfocus = function() {
+                showPreview(this);
+            };
+
+            trigger.onblur = function() {
                 hidePreview();
             };
 
@@ -205,31 +220,55 @@ require_login();
             stopPreviewMedia();
             preview.innerHTML = '';
             preview.style.display = 'none';
+            preview.style.width = '';
+            preview.style.maxHeight = '';
+            preview.style.left = '';
+            preview.style.top = '';
             preview.setAttribute('aria-hidden', 'true');
         }
 
         function positionPreview(trigger) {
             const rect = trigger.getBoundingClientRect();
             const margin = 12;
-            const previewWidth = 320;
-            const previewHeight = 180;
-            let left = rect.right + margin;
-            let top = rect.top;
+            const viewportPadding = 8;
+            const minWidth = 320;
+            const maxWidth = 800;
+            const spaceRight = window.innerWidth - rect.right - margin - viewportPadding;
+            const spaceLeft = rect.left - margin - viewportPadding;
+            const placeRight = spaceRight >= spaceLeft;
+            const horizontalSpace = placeRight ? spaceRight : spaceLeft;
+            const width = horizontalSpace < minWidth
+                ? Math.max(1, horizontalSpace)
+                : Math.min(maxWidth, horizontalSpace);
+            const spaceBelow = window.innerHeight - rect.bottom - margin - viewportPadding;
+            const spaceAbove = rect.top - margin - viewportPadding;
+            const placeBelow = spaceBelow >= spaceAbove;
+            const verticalSpace = placeBelow ? spaceBelow : spaceAbove;
+            const maxHeight = Math.max(1, verticalSpace);
+            let left;
+            let top;
 
-            if (left + previewWidth > window.innerWidth - 8) {
-                left = rect.left - previewWidth - margin;
+            preview.style.width = width + 'px';
+            preview.style.maxHeight = maxHeight + 'px';
+
+            if (placeRight) {
+                left = rect.right + margin;
+            } else {
+                left = rect.left - margin - width;
             }
 
-            if (left < 8) {
-                left = 8;
+            if (placeBelow) {
+                top = rect.bottom + margin;
+            } else {
+                top = rect.top - margin - maxHeight;
             }
 
-            if (top + previewHeight > window.innerHeight - 8) {
-                top = window.innerHeight - previewHeight - 8;
+            if (left < viewportPadding) {
+                left = viewportPadding;
             }
 
-            if (top < 8) {
-                top = 8;
+            if (top < viewportPadding) {
+                top = viewportPadding;
             }
 
             preview.style.left = left + 'px';
@@ -264,9 +303,19 @@ require_login();
             }
 
             preview.appendChild(media);
-            preview.style.display = 'block';
+            preview.style.display = 'flex';
             preview.setAttribute('aria-hidden', 'false');
             positionPreview(trigger);
+
+            if (media.tagName === 'IMG') {
+                media.onload = function() {
+                    positionPreview(trigger);
+                };
+            } else if (media.tagName === 'VIDEO') {
+                media.onloadedmetadata = function() {
+                    positionPreview(trigger);
+                };
+            }
         }
 
         async function load() {
@@ -293,10 +342,11 @@ require_login();
                 for (const e of list) {
                     const tr = document.createElement('tr');
                     tr.append(
-                        previewCell(e),
+                        filenameCell(e),
                         cell(e.display),
                         cell(e.start),
-                        cell(e.ende)
+                        cell(e.ende),
+                        previewCell(e)
                     );
 
                     const actions = document.createElement('td');
@@ -328,7 +378,7 @@ require_login();
                     body.append(tr);
                 }
             } catch {
-                document.querySelector('#events').innerHTML = '<tr><td colspan="5">Events konnten nicht geladen werden.</td></tr>';
+                document.querySelector('#events').innerHTML = '<tr><td colspan="6">Events konnten nicht geladen werden.</td></tr>';
             }
         }
 
