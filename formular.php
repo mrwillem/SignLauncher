@@ -156,6 +156,25 @@ require_login();
             return td;
         }
 
+
+	function formatDate(value) {
+    	    const date = new Date(value.replace(' ', 'T'));
+
+	    if (isNaN(date.getTime())) {
+		    return value;
+	    }
+
+	    const pad = (n) => String(n).padStart(2, '0');
+
+	    return (
+		    pad(date.getDate()) + '.' +
+		    pad(date.getMonth() + 1) + '.' +
+		    date.getFullYear() + ' ' +
+		    pad(date.getHours()) + ':' +
+		    pad(date.getMinutes())
+	    );
+	}
+
         function filenameCell(event) {
             return cell(event.original_name || 'Datei');
         }
@@ -344,8 +363,8 @@ require_login();
                     tr.append(
                         filenameCell(e),
                         cell(e.display),
-                        cell(e.start),
-                        cell(e.ende),
+                        cell(formatDate(e.start)),
+                        cell(formatDate(e.ende)),
                         previewCell(e)
                     );
 
