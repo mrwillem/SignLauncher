@@ -1,16 +1,21 @@
 <?php
 require __DIR__ . '/auth.php';
 migrate_legacy_data();
-if (is_configured()) { header('Location: login.php'); exit; }
+if (is_configured()) {
+    header('Location: login.php');
+    exit;
+}
 $error = '';
 $recoveryCode = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_csrf();
     $password = (string) ($_POST['password'] ?? '');
     $confirm = (string) ($_POST['confirm_password'] ?? '');
-    if (!valid_password($password)) $error = 'Das Passwort muss mindestens 12 Zeichen lang sein.';
-    elseif (!hash_equals($password, $confirm)) $error = 'Die Passwörter stimmen nicht überein.';
-    else {
+    if (!valid_password($password)) {
+        $error = 'Das Passwort muss mindestens 12 Zeichen lang sein.';
+    } elseif (!hash_equals($password, $confirm)) {
+        $error = 'Die Passwörter stimmen nicht überein.';
+    } else {
         $recoveryCode = new_recovery_code();
         save_auth_data(['password_hash' => password_hash($password, PASSWORD_ARGON2ID), 'recovery_hash' => recovery_code_hash($recoveryCode)]);
     }
