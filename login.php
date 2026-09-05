@@ -86,7 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="auth-actions">
-            <a href="reset_password.php">Passwort mit Wiederherstellungscode zurücksetzen</a>
+            <a
+                href="reset_password.php"
+                class="btn btn-secondary"
+            >
+                Passwort mit Wiederherstellungscode zurücksetzen
+            </a>
         </div>
     </main>
 </body>

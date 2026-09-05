@@ -21,9 +21,11 @@ require_login();
             </div>
 
             <nav class="page-nav">
-                <a href="screens.php">Displays</a>
-                <a href="change_password.php">Passwort ändern</a>
-                <a href="logout.php">Abmelden</a>
+                <a href="screens.php" class="btn btn-secondary">Displays</a>
+                <a href="change_password.php" class="btn btn-secondary">
+                    Passwort ändern
+                </a>
+                <a href="logout.php" class="btn btn-secondary">Abmelden</a>
             </nav>
         </header>
 

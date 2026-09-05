@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <code class="code-block"><?= h($recoveryCode) ?></code>
 
             <div class="auth-actions">
-                <a href="login.php">Zur Anmeldung</a>
+                <a href="login.php" class="btn btn-secondary">Zur Anmeldung</a>
             </div>
         <?php else: ?>
             <?php if ($error): ?>

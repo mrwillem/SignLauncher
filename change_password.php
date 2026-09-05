@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
 
         <div class="auth-actions">
-            <a href="formular.php">Zurück</a>
+            <a href="formular.php" class="btn btn-secondary">Zurück</a>
         </div>
     </main>
 </body>

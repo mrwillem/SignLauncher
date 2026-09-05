@@ -170,8 +170,10 @@ button,
     appearance: none;
     border: 1px solid transparent;
     border-radius: 12px;
+    min-height: 2.75rem;
     padding: 0.8rem 1rem;
     font: inherit;
+    line-height: 1.1;
     font-weight: 600;
     cursor: pointer;
     background: var(--primary);
@@ -220,6 +222,15 @@ button:hover,
 
 .page-nav a {
     font-weight: 600;
+}
+
+.page-nav .btn,
+.page-nav .btn-secondary,
+.page-nav .btn-danger,
+.auth-actions .btn,
+.auth-actions .btn-secondary,
+.auth-actions .btn-danger {
+    padding-inline: 0.95rem;
 }
 
 .inline-form {

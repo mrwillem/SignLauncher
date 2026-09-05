@@ -112,7 +112,9 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
             </div>
 
             <nav class="page-nav">
-                <a href="formular.php">Content administration</a>
+                <a href="formular.php" class="btn btn-secondary">
+                    Content administration
+                </a>
             </nav>
         </header>
 
@@ -212,7 +214,11 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                                     <?= (int) $display['orientation'] ?>°
                                 </td>
                                 <td>
-                                    <a href="<?= h($playbackUrl) ?>" target="_blank">
+                                    <a
+                                        href="<?= h($playbackUrl) ?>"
+                                        target="_blank"
+                                        class="btn btn-secondary"
+                                    >
                                         View
                                     </a>
 
@@ -226,6 +232,7 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                                     <div class="actions">
                                         <a
                                             href="screens.php?edit=<?= rawurlencode($display['id']) ?>"
+                                            class="btn btn-secondary"
                                         >
                                             Edit
                                         </a>
