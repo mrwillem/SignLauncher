@@ -1,6 +1,7 @@
 <?php
 
 require __DIR__ . '/auth.php';
+
 require_login();
 
 $error = '';
@@ -17,11 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         with_data_lock(function () use ($action, $id, &$error): void {
             $all = displays();
-            $index = array_search(
-                $id,
-                array_column($all, 'id'),
-                true
-            );
+            $index = array_search($id, array_column($all, 'id'), true);
 
             if ($action === 'delete') {
                 if ($index === false) {
@@ -83,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($error === '') {
         header('Location: screens.php');
-        exit();
+        exit;
     }
 }
 
@@ -98,217 +95,179 @@ $form = $edit ?? [
 ];
 
 $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
-
 ?>
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Displays</title>
-
-    <style>
-        body {
-            font-family: sans-serif;
-            max-width: 760px;
-            margin: 30px auto;
-            padding: 20px;
-        }
-
-        label {
-            display: block;
-            margin: 10px 0;
-        }
-
-        input,
-        select,
-        button {
-            padding: 8px;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        td,
-        th {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-
-        .actions {
-            display: inline;
-        }
-    </style>
+    <link rel="stylesheet" href="ui.css">
 </head>
+<body class="page-admin">
+    <main class="page-shell">
+        <header class="page-header card">
+            <div>
+                <h1>Displays</h1>
+            </div>
 
-<body>
+            <nav class="page-nav">
+                <a href="formular.php">Content administration</a>
+            </nav>
+        </header>
 
-    <h1>Displays</h1>
-
-    <p>
-        <a href="formular.php">Content administration</a>
-    </p>
-
-    <?php if ($error): ?>
-        <p><?= h($error) ?></p>
-    <?php endif; ?>
-
-    <h2>
-        <?= $edit ? 'Edit display' : 'Create display' ?>
-    </h2>
-
-    <form method="post">
-        <input
-            type="hidden"
-            name="csrf"
-            value="<?= h(csrf_token()) ?>"
-        >
-
-        <input
-            type="hidden"
-            name="action"
-            value="save"
-        >
-
-        <input
-            type="hidden"
-            name="original_id"
-            value="<?= h($edit['id'] ?? '') ?>"
-        >
-
-        <label>
-            ID
-            <input
-                name="id"
-                pattern="[A-Za-z0-9_-]+"
-                value="<?= h($form['id']) ?>"
-                <?= $edit ? 'readonly' : '' ?>
-                required
-            >
-        </label>
-
-        <label>
-            Name
-            <input
-                name="name"
-                value="<?= h($form['name']) ?>"
-                required
-            >
-        </label>
-
-        <label>
-            Orientation
-            <select name="orientation">
-                <?php foreach ([0, 90, 180, 270] as $o): ?>
-                    <option
-                        value="<?= $o ?>"
-                        <?= $form['orientation'] === $o ? 'selected' : '' ?>
-                    >
-                        <?= $o ?>°
-                    </option>
-                <?php endforeach; ?>
-            </select>
-        </label>
-
-        <button>Save display</button>
-
-        <?php if ($edit): ?>
-            <a href="screens.php">Cancel</a>
+        <?php if ($error): ?>
+            <div class="alert alert--error">
+                <?= h($error) ?>
+            </div>
         <?php endif; ?>
-    </form>
 
-    <h2>Configured displays</h2>
+        <section class="card stack">
+            <h2>
+                <?= $edit ? 'Edit display' : 'Create display' ?>
+            </h2>
 
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Orientation</th>
-                <th>Playback URL</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+            <form method="post" class="stack">
+                <input type="hidden" name="csrf" value="<?= h(csrf_token()) ?>">
+                <input type="hidden" name="action" value="save">
+                <input type="hidden" name="original_id" value="<?= h($edit['id'] ?? '') ?>">
 
-        <tbody>
-            <?php foreach (displays() as $display): ?>
-                <?php
-                $playbackUrl = $baseUrl
-                    . '/display.php?screen='
-                    . rawurlencode($display['id']);
-                ?>
-
-                <tr>
-                    <td>
-                        <?= h($display['id']) ?>
-                    </td>
-
-                    <td>
-                        <?= h($display['name']) ?>
-                    </td>
-
-                    <td>
-                        <?= (int) $display['orientation'] ?>°
-                    </td>
-
-                    <td>
-                        <a
-                            href="<?= h($playbackUrl) ?>"
-                            target="_blank"
+                <div class="field-grid">
+                    <div class="field">
+                        <label for="id">ID</label>
+                        <input
+                            id="id"
+                            name="id"
+                            pattern="[A-Za-z0-9_-]+"
+                            value="<?= h($form['id']) ?>"
+                            <?= $edit ? 'readonly' : '' ?>
+                            required
                         >
-                            View
-                        </a>
+                    </div>
 
-                        <br>
-
-                        <code>
-                            <?= h($playbackUrl) ?>
-                        </code>
-                    </td>
-
-                    <td>
-                        <a
-                            href="screens.php?edit=<?= rawurlencode($display['id']) ?>"
+                    <div class="field">
+                        <label for="name">Name</label>
+                        <input
+                            id="name"
+                            name="name"
+                            value="<?= h($form['name']) ?>"
+                            required
                         >
-                            Edit
-                        </a>
+                    </div>
 
-                        <form
-                            method="post"
-                            class="actions"
-                            onsubmit="return confirm('Delete this display?');"
-                        >
-                            <input
-                                type="hidden"
-                                name="csrf"
-                                value="<?= h(csrf_token()) ?>"
-                            >
+                    <div class="field">
+                        <label for="orientation">Orientation</label>
+                        <select name="orientation" id="orientation">
+                            <?php foreach ([0, 90, 180, 270] as $o): ?>
+                                <option
+                                    value="<?= $o ?>"
+                                    <?= $form['orientation'] === $o ? 'selected' : '' ?>
+                                >
+                                    <?= $o ?>°
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
 
-                            <input
-                                type="hidden"
-                                name="action"
-                                value="delete"
-                            >
+                <div class="form-actions">
+                    <button type="submit">Save display</button>
 
-                            <input
-                                type="hidden"
-                                name="id"
-                                value="<?= h($display['id']) ?>"
-                            >
+                    <?php if ($edit): ?>
+                        <a href="screens.php" class="btn btn-secondary">Cancel</a>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </section>
 
-                            <button>
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-    </table>
+        <section class="card stack">
+            <h2>Configured displays</h2>
 
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Orientation</th>
+                            <th>Playback URL</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach (displays() as $display): ?>
+                            <?php
+                            $playbackUrl = $baseUrl
+                                . '/display.php?screen='
+                                . rawurlencode($display['id']);
+                            ?>
+                            <tr>
+                                <td>
+                                    <?= h($display['id']) ?>
+                                </td>
+                                <td>
+                                    <?= h($display['name']) ?>
+                                </td>
+                                <td>
+                                    <?= (int) $display['orientation'] ?>°
+                                </td>
+                                <td>
+                                    <a href="<?= h($playbackUrl) ?>" target="_blank">
+                                        View
+                                    </a>
+
+                                    <br>
+
+                                    <code>
+                                        <?= h($playbackUrl) ?>
+                                    </code>
+                                </td>
+                                <td>
+                                    <div class="actions">
+                                        <a
+                                            href="screens.php?edit=<?= rawurlencode($display['id']) ?>"
+                                        >
+                                            Edit
+                                        </a>
+
+                                        <form
+                                            method="post"
+                                            class="inline-form"
+                                            onsubmit="return confirm('Delete this display?');"
+                                        >
+                                            <input
+                                                type="hidden"
+                                                name="csrf"
+                                                value="<?= h(csrf_token()) ?>"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="action"
+                                                value="delete"
+                                            >
+
+                                            <input
+                                                type="hidden"
+                                                name="id"
+                                                value="<?= h($display['id']) ?>"
+                                            >
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-danger"
+                                            >
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
