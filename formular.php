@@ -113,8 +113,15 @@ require_login();
         </section>
     </main>
 
+    <div
+        id="eventPreview"
+        class="event-preview"
+        aria-hidden="true"
+    ></div>
+
     <script>
         const csrf = <?= json_encode(csrf_token()) ?>;
+        const preview = document.getElementById('eventPreview');
         const pad = (n) => String(n).padStart(2, '0');
         const local = (d) =>
             `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -148,6 +155,120 @@ require_login();
             return td;
         }
 
+        function previewCell(event) {
+            const td = document.createElement('td');
+            const trigger = document.createElement('span');
+
+            trigger.textContent = event.original_name || 'Datei';
+            trigger.setAttribute('data-preview-display', event.display);
+            trigger.setAttribute('data-preview-file', event.bild);
+            trigger.setAttribute(
+                'data-preview-type',
+                /\.mp4$/i.test(event.bild) ? 'video' : 'image'
+            );
+
+            trigger.onmouseover = function() {
+                showPreview(this);
+            };
+
+            trigger.onmouseout = function() {
+                hidePreview();
+            };
+
+            td.appendChild(trigger);
+            return td;
+        }
+
+        function previewUrl(display, file) {
+            return 'media.php?screen=' + encodeURIComponent(display) + '&file=' + encodeURIComponent(file);
+        }
+
+        function stopPreviewMedia() {
+            const existingVideo = preview.querySelector('video');
+
+            if (existingVideo) {
+                try {
+                    existingVideo.pause();
+                } catch (e) {
+                }
+
+                existingVideo.removeAttribute('src');
+
+                try {
+                    existingVideo.load();
+                } catch (e) {
+                }
+            }
+        }
+
+        function hidePreview() {
+            stopPreviewMedia();
+            preview.innerHTML = '';
+            preview.style.display = 'none';
+            preview.setAttribute('aria-hidden', 'true');
+        }
+
+        function positionPreview(trigger) {
+            const rect = trigger.getBoundingClientRect();
+            const margin = 12;
+            const previewWidth = 320;
+            const previewHeight = 180;
+            let left = rect.right + margin;
+            let top = rect.top;
+
+            if (left + previewWidth > window.innerWidth - 8) {
+                left = rect.left - previewWidth - margin;
+            }
+
+            if (left < 8) {
+                left = 8;
+            }
+
+            if (top + previewHeight > window.innerHeight - 8) {
+                top = window.innerHeight - previewHeight - 8;
+            }
+
+            if (top < 8) {
+                top = 8;
+            }
+
+            preview.style.left = left + 'px';
+            preview.style.top = top + 'px';
+        }
+
+        function showPreview(trigger) {
+            const display = trigger.getAttribute('data-preview-display');
+            const file = trigger.getAttribute('data-preview-file');
+            const type = trigger.getAttribute('data-preview-type');
+            const url = previewUrl(display, file);
+            let media;
+
+            hidePreview();
+
+            if (type === 'video') {
+                media = document.createElement('video');
+                media.muted = true;
+                media.autoplay = true;
+                media.loop = true;
+                media.setAttribute('playsinline', 'playsinline');
+                media.src = url;
+
+                try {
+                    media.play();
+                } catch (e) {
+                }
+            } else {
+                media = document.createElement('img');
+                media.src = url;
+                media.alt = 'Vorschau';
+            }
+
+            preview.appendChild(media);
+            preview.style.display = 'block';
+            preview.setAttribute('aria-hidden', 'false');
+            positionPreview(trigger);
+        }
+
         async function load() {
             try {
                 const response = await fetch('events.php', {
@@ -172,7 +293,7 @@ require_login();
                 for (const e of list) {
                     const tr = document.createElement('tr');
                     tr.append(
-                        cell(e.original_name || 'Datei'),
+                        previewCell(e),
                         cell(e.display),
                         cell(e.start),
                         cell(e.ende)
