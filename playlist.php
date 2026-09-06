@@ -40,9 +40,16 @@ if ($selected !== null) {
     }
 }
 
-$image = $selected !== null || str_starts_with($file, 'standard_')
-    ? 'media.php?screen=' . rawurlencode($screen) . '&file=' . rawurlencode($file)
-    : $file;
+if ($selected !== null || str_starts_with($file, 'standard_')) {
+    $image = 'media.php?screen=' . rawurlencode($screen)
+        . '&file=' . rawurlencode($file);
+
+    if (is_file(media_path($file))) {
+        $image .= '&v=' . filemtime(media_path($file));
+    }
+} else {
+    $image = $file;
+}
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 echo json_encode(['image' => $image, 'type' => strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video' : 'image', 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);
