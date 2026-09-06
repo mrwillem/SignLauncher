@@ -79,29 +79,33 @@ if (($_POST['action'] ?? '') === 'save_default') {
     }
 
     ensure_data_dir();
+    with_data_lock(function () use ($display, $upload, $extension): void {
+        ensure_data_dir();
 
-    if (!is_dir(app_path('media'))) {
-        mkdir(app_path('media'), 0700, true);
-    }
-
-    $file = 'standard_' . $display . '.' . $extension;
-    $path = media_path($file);
-
-    // Vorhandenen Default Content entfernen.
-    foreach (['jpg', 'mp4'] as $oldExtension) {
-        $oldFile = 'standard_' . $display . '.' . $oldExtension;
-
-        if ($oldFile !== $file && is_file(media_path($oldFile))) {
-            unlink(media_path($oldFile));
+        if (!is_dir(app_path('media'))) {
+            mkdir(app_path('media'), 0700, true);
         }
-    }
 
-    if (!move_uploaded_file((string) $upload['tmp_name'], $path)) {
-        http_response_code(500);
-        exit('Default Content konnte nicht gespeichert werden.');
-    }
+        $file = 'standard_' . $display . '.' . $extension;
+        $path = media_path($file);
 
-    @chmod($path, 0600);
+        foreach (['jpg', 'mp4'] as $oldExtension) {
+            $oldFile = 'standard_' . $display . '.' . $oldExtension;
+
+            if ($oldFile !== $file && is_file(media_path($oldFile))) {
+                unlink(media_path($oldFile));
+            }
+        }
+
+        if (!move_uploaded_file((string)$upload['tmp_name'], $path)) {
+            throw new RuntimeException(
+                'Default Content konnte nicht gespeichert werden.'
+            );
+        }
+
+
+        @chmod($path, 0600);
+    });
 
     header('Location: screens.php?message=' . rawurlencode(
         'Default Content gespeichert.'
@@ -111,6 +115,30 @@ if (($_POST['action'] ?? '') === 'save_default') {
 function redirect_admin(string $message): never
 {
     header('Location: formular.php?message=' . rawurlencode($message));
+    exit;
+}
+if (($_POST['action'] ?? '') === 'delete_default') {
+    $display = (string) ($_POST['display_typ'] ?? '');
+
+    if (!valid_screen($display)) {
+        http_response_code(400);
+        exit('Unbekanntes Display.');
+    }
+
+    with_data_lock(function () use ($display): void {
+        foreach (['jpg', 'mp4'] as $extension) {
+            $file = 'standard_' . $display . '.' . $extension;
+            $path = media_path($file);
+
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
+    });
+
+    header('Location: screens.php?message=' . rawurlencode(
+            'Default Content gelöscht.'
+        ));
     exit;
 }
 if (($_POST['action'] ?? '') === 'delete') {
