@@ -75,7 +75,7 @@ require_login();
                 </div>
 
                 <div class="field">
-                    <label for="menue_bild">Bild / Grafik (JPG oder MP4)</label>
+                    <label for="menue_bild">Bild / Grafik oder Video (JPG, MP4 oder WebM)</label>
                     <input
                         type="file"
                         name="menue_bild"
