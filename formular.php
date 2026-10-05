@@ -46,7 +46,10 @@ require_login();
                         <label for="display_typ">Bildschirm</label>
                         <select name="display_typ" id="display_typ" required>
                             <?php foreach (displays() as $screen): ?>
-                                <option value="<?= h($screen['id']) ?>">
+                                <option
+                                        value="<?= h($screen['id']) ?>"
+                                        data-video-format="<?= h($screen['video_format'] ?? 'mp4') ?>"
+                                >
                                     <?= h($screen['name']) ?>
                                 </option>
                             <?php endforeach; ?>
@@ -80,7 +83,7 @@ require_login();
                         type="file"
                         name="menue_bild"
                         id="menue_bild"
-                        accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4,video/webm,.webm"
+                        accept="image/jpeg,.jpg,.jpeg"
                         required
                     >
                 </div>
@@ -121,6 +124,8 @@ require_login();
     ></div>
 
     <script>
+        const displaySelect = document.getElementById('display_typ');
+        const fileInput = document.getElementById('menue_bild');
         const csrf = <?= json_encode(csrf_token()) ?>;
         const preview = document.getElementById('eventPreview');
         const pad = (n) => String(n).padStart(2, '0');
@@ -155,6 +160,17 @@ require_login();
             td.textContent = text;
             return td;
         }
+
+        function updateFileAccept() {
+            const option = displaySelect.options[displaySelect.selectedIndex];
+            const format = option.dataset.videoFormat || 'mp4';
+
+            fileInput.accept =
+                'image/jpeg,.jpg,.jpeg,video/' + format + ',.' + format;
+        }
+
+        displaySelect.addEventListener('change', updateFileAccept);
+        updateFileAccept();
 
 
 	function formatDate(value) {
