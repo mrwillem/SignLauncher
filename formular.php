@@ -80,7 +80,7 @@ require_login();
                         type="file"
                         name="menue_bild"
                         id="menue_bild"
-                        accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4"
+                        accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4,video/webm,.webm"
                         required
                     >
                 </div>
@@ -190,7 +190,7 @@ require_login();
             trigger.setAttribute('data-preview-file', event.bild);
             trigger.setAttribute(
                 'data-preview-type',
-                /\.mp4$/i.test(event.bild) ? 'video' : 'image'
+                /\.(mp4|webm)$/i.test(event.bild) ? 'video' : 'image'
             );
 
             trigger.onmouseover = function() {

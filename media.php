@@ -21,8 +21,9 @@ foreach (events() as $event) {
 // Default-Medium
 $defaultJpg = 'standard_' . $screen . '.jpg';
 $defaultMp4 = 'standard_' . $screen . '.mp4';
+$defaultWebm = 'standard_' . $screen . '.webm';
 
-if ($file === $defaultJpg || $file === $defaultMp4) {
+if ($file === $defaultJpg || $file === $defaultMp4 || $file === $defaultWebm) {
     $allowed = true;
 }
 $path = media_path($file);
@@ -30,7 +31,12 @@ if (!$allowed || !is_file($path)) {
     http_response_code(404);
     exit;
 }
-header('Content-Type: ' . (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video/mp4' : 'image/jpeg'));
+$mime = match (strtolower(pathinfo($file, PATHINFO_EXTENSION))) {
+    'mp4' => 'video/mp4',
+    'webm' => 'video/webm',
+    default => 'image/jpeg',
+};
+header('Content-Type: ' . $mime);
 header('Content-Length: ' . filesize($path));
 header('Cache-Control: private, max-age=3600');
 readfile($path);

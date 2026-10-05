@@ -26,7 +26,9 @@ if ($selected !== null) {
 } else {
     $file = null;
 
-    foreach (['jpg', 'mp4'] as $extension) {
+    $videoFormat = (display_by_id($screen)['video_format'] ?? 'mp4');
+
+    foreach (['jpg', $videoFormat] as $extension) {
         $candidate = 'standard_' . $screen . '.' . $extension;
 
         if (is_file(media_path($candidate))) {
@@ -52,4 +54,4 @@ if ($selected !== null || str_starts_with($file, 'standard_')) {
 }
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-echo json_encode(['image' => $image, 'type' => strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'mp4' ? 'video' : 'image', 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);
+echo json_encode(['image' => $image, 'type' => in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), ['mp4', 'webm'], true) ? 'video' : 'image', 'updated_at' => gmdate('c')], JSON_UNESCAPED_SLASHES);

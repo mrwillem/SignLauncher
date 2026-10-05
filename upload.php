@@ -47,9 +47,17 @@ if (($_POST['action'] ?? '') === 'save_default') {
         $extension = 'jpg';
     }
 
-    if (!in_array($extension, ['jpg', 'mp4'], true)) {
+    if (!in_array($extension, ['jpg', 'mp4', 'webm'], true)) {
         http_response_code(400);
-        exit('Nur JPG und MP4 sind erlaubt.');
+        exit('Nur JPG, MP4 und WebM sind erlaubt.');
+    }
+
+    $displayConfig = display_by_id($display);
+    $videoFormat = $displayConfig['video_format'] ?? 'mp4';
+
+    if ($extension !== 'jpg' && $extension !== $videoFormat) {
+        http_response_code(400);
+        exit('Für dieses Display ist nur ' . strtoupper($videoFormat) . ' als Videoformat erlaubt.');
     }
 
     if ($extension === 'jpg') {
@@ -78,6 +86,16 @@ if (($_POST['action'] ?? '') === 'save_default') {
         exit('Ungültige MP4-Datei.');
     }
 
+    if (
+        $extension === 'webm' &&
+        (new finfo(FILEINFO_MIME_TYPE))->file(
+            (string) $upload['tmp_name']
+        ) !== 'video/webm'
+    ) {
+        http_response_code(400);
+        exit('Ungültige WebM-Datei.');
+    }
+
     ensure_data_dir();
     with_data_lock(function () use ($display, $upload, $extension): void {
         ensure_data_dir();
@@ -89,7 +107,7 @@ if (($_POST['action'] ?? '') === 'save_default') {
         $file = 'standard_' . $display . '.' . $extension;
         $path = media_path($file);
 
-        foreach (['jpg', 'mp4'] as $oldExtension) {
+        foreach (['jpg', 'mp4', 'webm'] as $oldExtension) {
             $oldFile = 'standard_' . $display . '.' . $oldExtension;
 
             if ($oldFile !== $file && is_file(media_path($oldFile))) {
@@ -198,9 +216,19 @@ if ($extension === 'mp4' && (new finfo(FILEINFO_MIME_TYPE))->file((string) $uplo
     http_response_code(400);
     exit('Ungültige MP4-Datei.');
 }
-if (!in_array($extension, ['jpg', 'jpeg', 'mp4'], true)) {
+if ($extension === 'webm' && (new finfo(FILEINFO_MIME_TYPE))->file((string) $upload['tmp_name']) !== 'video/webm') {
     http_response_code(400);
-    exit('Nur JPG und MP4 sind erlaubt.');
+    exit('Ungültige WebM-Datei.');
+}
+if (!in_array($extension, ['jpg', 'jpeg', 'mp4', 'webm'], true)) {
+    http_response_code(400);
+    exit('Nur JPG, MP4 und WebM sind erlaubt.');
+}
+$displayConfig = display_by_id($display);
+$videoFormat = $displayConfig['video_format'] ?? 'mp4';
+if ($extension !== 'jpg' && $extension !== 'jpeg' && $extension !== $videoFormat) {
+    http_response_code(400);
+    exit('Für dieses Display ist nur ' . strtoupper($videoFormat) . ' als Videoformat erlaubt.');
 }
 $originalName = basename((string) $upload['name']);
 $file = 'display_' . $display . '_' . bin2hex(random_bytes(12)) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);

@@ -6,7 +6,9 @@ require_login();
 
 function default_content(string $screen): ?array
 {
-    foreach (['jpg', 'mp4'] as $extension) {
+    $videoFormat = ($screenDisplay = display_by_id($screen))['video_format'] ?? 'mp4';
+
+    foreach (['jpg', $videoFormat] as $extension) {
         $file = 'standard_' . $screen . '.' . $extension;
 
         if (is_file(media_path($file))) {
@@ -59,13 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['orientation'] ?? null,
                 FILTER_VALIDATE_INT
             );
+            $videoFormat = (string) ($_POST['video_format'] ?? 'mp4');
 
             if (
                 $name === '' ||
                 $orientation === false ||
-                !in_array($orientation, [0, 90, 180, 270], true)
+                !in_array($orientation, [0, 90, 180, 270], true) ||
+                !in_array($videoFormat, ['mp4', 'webm'], true)
             ) {
-                $error = 'Name and orientation are required.';
+                $error = 'Name, orientation, and video format are required.';
                 return;
             }
 
@@ -81,12 +85,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id' => $id,
                     'name' => $name,
                     'orientation' => $orientation,
+                    'video_format' => $videoFormat,
                 ];
             } else {
                 $all[] = [
                     'id' => $id,
                     'name' => $name,
                     'orientation' => $orientation,
+                    'video_format' => $videoFormat,
                 ];
             }
 
@@ -108,6 +114,7 @@ $form = $edit ?? [
     'id' => '',
     'name' => '',
     'orientation' => 0,
+    'video_format' => 'mp4',
 ];
 
 $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
@@ -186,6 +193,20 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                             <?php endforeach; ?>
                         </select>
                     </div>
+
+                    <div class="field">
+                        <label for="video_format">Video format</label>
+                        <select name="video_format" id="video_format">
+                            <?php foreach (['mp4', 'webm'] as $format): ?>
+                                <option
+                                    value="<?= h($format) ?>"
+                                    <?= ($form['video_format'] ?? 'mp4') === $format ? 'selected' : '' ?>
+                                >
+                                    <?= h(strtoupper($format)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-actions">
@@ -208,6 +229,7 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                             <th>ID</th>
                             <th>Name</th>
                             <th>Orientation</th>
+                            <th>Video format</th>
 			    <th>Playback URL</th>
 			    <th>Default Content</th>
                             <th>Actions</th>
@@ -229,6 +251,9 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
                                 </td>
                                 <td>
                                     <?= (int) $display['orientation'] ?>°
+                                </td>
+                                <td>
+                                    <?= h($display['video_format'] ?? 'mp4') ?>
                                 </td>
                                 <td>
                                     <a
@@ -314,7 +339,7 @@ $baseUrl = 'https://' . $_SERVER['HTTP_HOST'];
         				<input
             				    type="file"
             				    name="default_content"
-            				    accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4"
+                                accept="image/jpeg,.jpg,.jpeg,video/mp4,.mp4,video/webm,.webm"
             				    required
         				>
 
