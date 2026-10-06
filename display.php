@@ -77,7 +77,14 @@ if ($display === null) {
     <script>
         var playlistUrl = <?= json_encode('playlist.php?screen=' . rawurlencode($screen)) ?>;
         var currentImage = '';
+	
+	var signageVideo = document.getElementById('signageVideo');
 
+	signageVideo.addEventListener('ended', function () {
+    		try {
+        		signageVideo.play();
+    		} catch (e) {}
+	});
         function aktualisiereDisplay() {
             var xhr = new XMLHttpRequest();
 
