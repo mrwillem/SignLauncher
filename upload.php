@@ -34,7 +34,7 @@ if (($_POST['action'] ?? '') === 'save_default') {
         exit('Upload fehlgeschlagen.');
     }
 
-    if (($upload['size'] ?? 0) > 25 * 1024 * 1024) {
+    if (($upload['size'] ?? 0) > 35 * 1024 * 1024) {
         http_response_code(400);
         exit('Die Datei ist größer als 25 MB.');
     }
@@ -196,7 +196,7 @@ if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_f
     http_response_code(400);
     exit('Upload fehlgeschlagen.');
 }
-if (($upload['size'] ?? 0) > 25 * 1024 * 1024) {
+if (($upload['size'] ?? 0) > 35 * 1024 * 1024) {
     http_response_code(400);
     exit('Die Datei ist größer als 25 MB.');
 }
