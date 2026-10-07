@@ -82,9 +82,12 @@ if ($display === null) {
 
 	signageVideo.addEventListener('ended', function () {
     		try {
+        		signageVideo.load();
         		signageVideo.play();
-    		} catch (e) {}
+    		} catch (e) {
+    		}
 	});
+
         function aktualisiereDisplay() {
             var xhr = new XMLHttpRequest();
 
